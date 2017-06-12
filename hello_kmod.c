@@ -12,7 +12,7 @@
 struct cdev char_dev_array[BUFFSIZE];
 char kern_buff[BUFFSIZE+1] = "hakodate";
 
-char hello_array[BUFFSIZE][HELLOSIZE] = {
+char hello_array[BUFFSIZE+1][HELLOSIZE] = {
 		"hello0",
 		"hello1",
 		"hello2",
@@ -20,7 +20,8 @@ char hello_array[BUFFSIZE][HELLOSIZE] = {
 		"hello4",
 		"hello5",
 		"hello6",
-		"hello7"
+		"hello7",
+		"hello8"
 };
 
 static int chardev_open(struct inode *inode, struct file *file){
@@ -181,7 +182,27 @@ static ssize_t chardev_write7(struct file *file, const char __user *buf, const s
 		return count;
 }
 
-static struct file_operations chardev_fops_array[BUFFSIZE] = {
+static ssize_t chardev_read8(struct file *file, char __user *buf, size_t count, loff_t *loff){
+		if (count < BUFFSIZE) {
+				printk(KERN_INFO "error:count size smaller than 1\n");
+				return -ENOSPC;
+		}
+		copy_to_user(buf, &kern_buff, CHARSIZE);
+		return count;
+}
+
+
+static ssize_t chardev_write8(struct file *file, const char __user *buf, const size_t count, loff_t *loff){
+		if (count < BUFFSIZE) {
+				printk(KERN_INFO "error:count size smaller than 1\n");
+				return -ENOSPC;
+		}
+		copy_from_user(kern_buff, buf, CHARSIZE);
+		return count;
+}
+
+
+static struct file_operations chardev_fops_array[BUFFSIZE+1] = {
 		{
 				.owner = THIS_MODULE,
 				.open = chardev_open,
@@ -237,25 +258,31 @@ static struct file_operations chardev_fops_array[BUFFSIZE] = {
 				.read = chardev_read7,
 				.release = chardev_close,
 				.write = chardev_write7,
+		},
+		{
+				.owner = THIS_MODULE,
+				.open = chardev_open,
+				.read = chardev_read8,
+				.release = chardev_close,
+				.write = chardev_write8,
 		}
 };
 
-dev_t dev_array[BUFFSIZE];
+dev_t dev_array[BUFFSIZE+1];
 
 static int __init hello_init(void)
 {
 		int i = 0;
 		//setup major minor number
-		for (i = 0; i < BUFFSIZE; i++ ){
+		for (i = 0; i < BUFFSIZE+1; i++ ){
 				dev_array[i] = MKDEV(240, i);
 		}
-		for (i = 0; i < BUFFSIZE; i++ ){
+		for (i = 0; i < BUFFSIZE+1; i++ ){
 				register_chrdev_region(dev_array[i], 1, hello_array[i]);
 				cdev_init(&char_dev_array[i], &chardev_fops_array[i]);
 				cdev_add(&char_dev_array[i], dev_array[i], 1);
 		}
-		printk(KERN_INFO "init cdev.\n");
-		printk(KERN_INFO "setup hakodate!\n");
+		printk(KERN_INFO "init cdev_array.\n");
 		printk(KERN_INFO "Hello World\n");
 		return 0;
 }
@@ -264,7 +291,7 @@ static void __exit hello_exit(void)
 {
 		int i = 0;
 		//delete chardevice
-		for (i = 0; i < BUFFSIZE; i++ ){
+		for (i = 0; i < BUFFSIZE+1; i++ ){
 				cdev_del(&char_dev_array[i]);
 				unregister_chrdev_region(dev_array[i], 1);
 		}
