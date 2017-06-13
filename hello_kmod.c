@@ -9,7 +9,7 @@
 #define CHARSIZE 1
 #define HELLOSIZE 7
 
-struct cdev char_dev_array[BUFFSIZE];
+struct cdev char_dev_array[BUFFSIZE+1];
 char kern_buff[BUFFSIZE+1] = "hakodate";
 
 char hello_array[BUFFSIZE+1][HELLOSIZE] = {
@@ -94,6 +94,7 @@ static ssize_t chardev_read3(struct file *file, char __user *buf, size_t count, 
 				printk(KERN_INFO "error:count size smaller than 1\n");
 				return -ENOSPC;
 		}
+		printk(KERN_INFO "now kern buff is %s\n", kern_buff);
 		copy_to_user(buf, &kern_buff[3], CHARSIZE);
 		return count;
 }
@@ -184,20 +185,20 @@ static ssize_t chardev_write7(struct file *file, const char __user *buf, const s
 
 static ssize_t chardev_read8(struct file *file, char __user *buf, size_t count, loff_t *loff){
 		if (count < BUFFSIZE) {
-				printk(KERN_INFO "error:count size smaller than 1\n");
+				printk(KERN_INFO "error:count size smaller than 8 read\n");
 				return -ENOSPC;
 		}
-		copy_to_user(buf, &kern_buff, CHARSIZE);
+		copy_to_user(buf, kern_buff, BUFFSIZE);
 		return count;
 }
 
 
 static ssize_t chardev_write8(struct file *file, const char __user *buf, const size_t count, loff_t *loff){
 		if (count < BUFFSIZE) {
-				printk(KERN_INFO "error:count size smaller than 1\n");
+				printk(KERN_INFO "error:count size smaller than 8 write\n");
 				return -ENOSPC;
 		}
-		copy_from_user(kern_buff, buf, CHARSIZE);
+		copy_from_user(kern_buff, buf, BUFFSIZE);
 		return count;
 }
 
