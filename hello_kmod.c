@@ -24,33 +24,37 @@ static int chardev_close(struct inode *inode, struct file *file){
 }
 
 static ssize_t chardev_read(struct file *file, char __user *buf, size_t count, loff_t *loff){
-		if (count < CHARSIZE) {
-				printk(KERN_INFO "error:count size smaller than 1\n");
-				return -ENOSPC;
-		}
-
 		int minor = (int)file->private_data;
 		if (minor != 0){
+				if (count < CHARSIZE) {
+						printk(KERN_INFO "error:count size smaller than 1 at read\n");
+						return -ENOSPC;
+				}
 				int index = minor-1;
 				copy_to_user(buf, &kern_buff[index], CHARSIZE);
 		} else {
+				if (count < BUFFSIZE) {
+						printk(KERN_INFO "error:count size smaller than 8 at read\n");
+				}
 				copy_to_user(buf, kern_buff, BUFFSIZE);
 		}
 		return count;
 }
 
 static ssize_t chardev_write(struct file *file, const char __user *buf, const size_t count, loff_t *loff){
-		if (count < CHARSIZE) {
-				printk(KERN_INFO "error:count size smaller than 1\n");
-				return -ENOSPC;
-		}
-
 		int minor = (int)file->private_data;
 
 		if (minor != 0){
+				if (count < CHARSIZE) {
+						printk(KERN_INFO "error:count size smaller than 1 at write\n");
+						return -ENOSPC;
+				}
 				int index = minor-1;
 				copy_from_user(&kern_buff[index], buf, CHARSIZE);
 		} else {
+				if (count < BUFFSIZE) {
+						printk(KERN_INFO "error:count size smaller than 8 at write\n");
+				}
 				copy_from_user(kern_buff, buf, BUFFSIZE);
 		}
 		return count;
